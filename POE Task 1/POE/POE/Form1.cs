@@ -21,7 +21,7 @@ namespace POE
         public static Unit[,] units = new Unit[2, 400]; 
         int counter = 0;
         public int tick; // creates an empty integer to use to count and increment ticks for timer 
-     
+      
         [Serializable]
         public abstract class Unit:Button
         {
@@ -38,9 +38,44 @@ namespace POE
                 }
                     public virtual void moveUnit( )
                     {
-                        
+                        Unit otherUnit = nearestUnit();
+                        int xChange = 0;
+                        int yChange = 0;                        
+                       
+                        if (this.xPos > otherUnit.xPos)
+                        {
+                            xChange = -1;
                         }
-                     
+                        else if(this.xPos < otherUnit.xPos)
+                        {
+                            xChange = 1;
+                        }
+                       
+                        if (this.yPos < otherUnit.yPos)
+                        {
+                            yChange = -1;
+                        }
+                        else if (this.yPos > otherUnit.yPos)
+                        {
+                            yChange = 1;
+                        }
+                       
+                        Form1.btnArr[this.xPos, this.yPos] = null;
+                        if (this.xPos + xChange <20 && this.xPos +xChange>=0)
+                        {
+                            if (Form1.btnArr[this.xPos + xChange, this.yPos] == null)
+                            {
+                                this.xPos = this.xPos + xChange;
+                            }
+                        }
+                        if (this.yPos + yChange < 20 && this.yPos + yChange >= 0)
+                        {
+                            if (Form1.btnArr[this.xPos, this.yPos + yChange] == null)
+                            {
+                                this.yPos = this.yPos + yChange;
+                            }
+                        }
+                        Form1. btnArr[this.xPos, this.yPos] = this;
                 //Console.WriteLine(this.team);
                 //Console.WriteLine(this.xPos + "x" + otherUnit.xPos);
                 //Console.WriteLine(this.yPos + "y" + otherUnit.yPos);
@@ -58,7 +93,33 @@ namespace POE
                     }
                     public virtual Unit nearestUnit()
                     {
-                           
+                           Unit closestUnit = null;
+                            double closestDistance = 500;
+                            int otherteam = 0;
+                            if(this.team == otherteam)
+                            {
+                                otherteam = 1;
+                            }
+                            for (int i = 0; i < 400; i++)
+                            {
+                                if(units[otherteam,i] !=null)
+                                {
+                                                Unit otherUnit = units[otherteam, i];
+                                    double x, y, distance;
+                                    x = this.xPos - otherUnit.xPos;
+                                    y= this.yPos - otherUnit.yPos;
+                                    x = x * x;
+                                    y = y * y;
+                                    distance = x + y;
+                                    distance = Math.Sqrt(distance);
+                                    if(distance<closestDistance)
+                                    {
+                                        closestDistance = distance;
+                                        closestUnit = otherUnit;
+                                    }
+                                }
+                            }
+                return closestUnit;
                     }
                     public virtual void unitDeath(int hp)
                     {
@@ -230,14 +291,13 @@ namespace POE
         {
 
             Form1 form1; 
-            public ResourceBuilding RB
-           {get;set;}
+
             public int TicksPerProduction
             { get; set; }
             public GameEngine(Form1 form1)
             {
                 this.form1 = form1;
-                RB = new ResourceBuilding(form1);
+
 
             }
             
@@ -267,7 +327,33 @@ namespace POE
 
         public void UnitMovement()
         {
-
+            GridLayout.SuspendLayout();
+            GridLayout.Controls.Clear();
+            for (int i = 0; i < 2; i++)
+            {
+                for (int j = 0;j < 400; j++)
+                {
+                    if (units[i, j] != null)
+                    {
+                        units[i, j].moveUnit();
+                    }
+                }
+            }
+            for (int i = 0; i < 20; i++)
+            {
+                for (int j = 0; j < 20; j++)
+                {
+                    if(btnArr[i,j] == null)
+                    {
+                        GridLayout.Controls.Add(new Button(), i, j);
+                    }
+                    else
+                    {
+                        GridLayout.Controls.Add(btnArr[i,j], i, j);
+                    }
+                }
+            }
+            GridLayout.ResumeLayout();
 
         }
 
@@ -321,7 +407,7 @@ namespace POE
         {
             tick++;
             label1.Text = tick.ToString(); //converts the timer to text onto the label
-            MainEngine.RB.ResourceGenerate();
+
             UnitMovement();
         }
         private void startBtn_Click_1(object sender, EventArgs e)   // once the start button is pressed the timer begins and text is changed to stop. if pressed again timer is stopped and text is changed to start
@@ -359,7 +445,7 @@ namespace POE
             counter = 0;
             textBox1.Text = "";
             ResourceNum2.Text = "";
-            MainEngine.RB.ClearResources();
+
     
         }
         private void GridLayout_Paint(object sender, PaintEventArgs e)
@@ -368,7 +454,14 @@ namespace POE
         }
         public int unitFill(int team)   // giving unit team 
         {
-
+            int i;
+            i = -1;
+               do
+                {
+                    i++;
+                }
+                    while (units[team, i] != null);
+                    return i;
         }
 
     }
